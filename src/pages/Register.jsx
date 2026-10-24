@@ -1,40 +1,97 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import axios from "axios";
+import { Link, useNavigate } from "react-router-dom";
 
 function Register() {
-  return (
-    <div className="auth-shell">
-      <div className="auth-card">
-        <div className="auth-header">
-          <span className="auth-badge">Create account</span>
-          <h2>Join CyberShield</h2>
-          <p>Start protecting your digital life.</p>
-        </div>
+const [formData, setFormData] = useState({
+name: "",
+email: "",
+password: ""
+});
 
-        <form className="auth-form">
-          <label>
-            Full name
-            <input type="text" placeholder="John Doe" required />
-          </label>
+const [message, setMessage] = useState("");
+const [loading, setLoading] = useState(false);
+const navigate = useNavigate();
 
-          <label>
-            Email address
-            <input type="email" placeholder="you@example.com" required />
-          </label>
+const handleChange = (e) => {
+    setFormData({
+        ...formData,
+        [e.target.name]: e.target.value
+    });
+};
 
-          <label>
-            Password
-            <input type="password" placeholder="Create a secure password" required />
-          </label>
+const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMessage("");
+    setLoading(true);
 
-          <button type="submit" className="primary-btn">Register</button>
+    try {
+        const response = await axios.post(
+            "https://cybershield-api-la3m.onrender.com/api/register",
+            formData
+        );
+
+        localStorage.setItem("token", response.data.token);
+        localStorage.setItem("user", JSON.stringify(response.data.user));
+
+        setMessage("Registration successful!");
+        navigate("/");
+    } catch (error) {
+        setMessage(
+            error.response?.data?.message ||
+            "Registration failed. Please try again."
+        );
+    } finally {
+        setLoading(false);
+    }
+};
+
+return (
+    <div className="auth-card">
+        <h2>Create Account</h2>
+        <p>Join CyberShield and stay safer online.</p>
+
+        <form onSubmit={handleSubmit}>
+            <input
+                type="text"
+                name="name"
+                placeholder="Full Name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+            />
+
+            <input
+                type="email"
+                name="email"
+                placeholder="Email Address"
+                value={formData.email}
+                onChange={handleChange}
+                required
+            />
+
+            <input
+                type="password"
+                name="password"
+                placeholder="Password (minimum 8 characters)"
+                value={formData.password}
+                onChange={handleChange}
+                minLength={8}
+                required
+            />
+
+            <button type="submit" disabled={loading}>
+                {loading ? "Creating Account..." : "Register"}
+            </button>
         </form>
 
-        <p className="auth-footer">
-          Already have an account? <Link to="/login" className="text-link">Login</Link>
+        {message && <p role="status">{message}</p>}
+
+        <p>
+            Already have an account? <Link to="/login">Login</Link>
         </p>
-      </div>
     </div>
-  );
+);
 }
 
 export default Register;
